@@ -30,7 +30,7 @@ class feature_preprocessing():
         if filename == None and sepa == None:
             self.data = pd.DataFrame()
         else:
-            self.data = pd.read_csv(filename, sep=sepa , usecols=usecols, nrows = 50000)
+            self.data = pd.read_csv(filename, sep=sepa , usecols=usecols)
 
     def ass_id_creation(self): # Create ASS_ID (int between 0 and 28) from ASS_ASSIGNMENT as defined in configuration.py
         self.data['ASS_ID'] = self.data['ASS_ASSIGNMENT'].apply(lambda x: int(CONFIG.ass_assign[x]))
@@ -118,7 +118,6 @@ class feature_preprocessing():
         self.select_assid(assid)
         self.preprocess_date()
         self.date_vector()
-        self.data.info()
         self.lastvalue(7)
         self.lastvalue(14)
         self.lastvalue(21)

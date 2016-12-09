@@ -63,10 +63,6 @@ class submission_preprocessing():
         self.data.set_index('DATE',inplace = True,verify_integrity = True)
     
     
-
-    def valeur_max(self):
-        self.data['MAX'] = np.maximum.reduce([self.data['before7'], self.data['before14'], self.data['before21'], self.data['before28'], self.data['before35']])
-    
     
     
     def jour_nuit_creation(self):  #Création de la feature jour nuit
@@ -100,7 +96,6 @@ class submission_preprocessing():
         self.date_vector()
         self.jour_nuit_creation()
         self.week_day_to_vector()
-#        self.valeur_max()
 
         
         if not keep_all:

@@ -9,7 +9,7 @@ class _Config:
         self.before = {1: 'before7',2:'before14', 3:'before21', 4:'before28', 6:'before56',7:'before84', 8:'before112',11:'before140',12:'before168'}
         
     
-        self.default_columns = list(self.before.values())+['2012','2011','JOUR','MAX','CSPL_RECEIVED_CALLS']
+        self.default_columns = ['2012','2011','JOUR','CSPL_RECEIVED_CALLS']+list(self.before.values())+['MAX']
         
         self.sub_columns = ['2012','2011','JOUR','prediction']        
 #        self.sub_columns = list(self.before.values())+['2012','2011','JOUR','MAX','prediction']
