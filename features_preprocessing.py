@@ -30,7 +30,7 @@ class feature_preprocessing():
         if filename == None and sepa == None:
             self.data = pd.DataFrame()
         else:
-            self.data = pd.read_csv(filename, sep=sepa , usecols=usecols)
+            self.data = pd.read_csv(filename, sep=sepa , usecols=usecols, nrows = 50000)
 
     def ass_id_creation(self): # Create ASS_ID (int between 0 and 28) from ASS_ASSIGNMENT as defined in configuration.py
         self.data['ASS_ID'] = self.data['ASS_ASSIGNMENT'].apply(lambda x: int(CONFIG.ass_assign[x]))
@@ -57,6 +57,7 @@ class feature_preprocessing():
         self.data['SLOT'] = self.data['TIME'].apply(lambda x: (x in range(450,1411))*(x-450)/30 + (x in range(0,451))*(x/30+1) + (x in range(1411,1441))*0)
         #self.data['TIME'] = self.data['TIME'].apply(lambda x: x in range(450,1411)*(x[0]-450)/30 + x in range(0,451)*(x/30+1) + x in range(1411,1441)*0)
         self.data['YEAR_DAY']= self.data["DATE"].apply(lambda x : x.tm_yday)
+        self.data['DATE'] = self.data['DATE'].apply(lambda x: dt.datetime(x.tm_year,x.tm_mon,x.tm_mday,x.tm_hour,x.tm_min))        
         self.data.set_index('DATE', inplace = True)
     
     def normalize_Calls (self):
@@ -118,7 +119,6 @@ class feature_preprocessing():
         self.preprocess_date()
         self.date_vector()
         self.data.info()
-        self.data.set_index('DATE',inplace = True,verify_integrity = True)
         self.lastvalue(7)
         self.lastvalue(14)
         self.lastvalue(21)
@@ -139,8 +139,6 @@ class feature_preprocessing():
         
         if not keep_all:
             self.data = self.data[used_columns]
-        else:
-            self.data = self.data.drop(remove_columns, axis=1)
 
 
 if __name__ == "__main__": #execute the code only if the file is executed directly and not imported

@@ -59,13 +59,8 @@ class submission_preprocessing():
         self.data['SLOT'] = self.data['TIME'].apply(lambda x: (x in range(450,1411))*(x-450)/30 + (x in range(0,451))*(x/30+1) + (x in range(1411,1441))*0)
 #        self.data['YEAR_DAY']= self.data['DATE'].apply(extract_weekday)
         self.data['WEEK_DAY'] = self.data['DATE'].apply(lambda x: x.tm_wday)
+        self.data['DATE'] = self.data['DATE'].apply(lambda x: dt.datetime(x.tm_year,x.tm_mon,x.tm_mday,x.tm_hour,x.tm_min))        
         self.data.set_index('DATE',inplace = True,verify_integrity = True)
-    
-    
-    def lastvalue(self,date):
-        temp = self.data[self.data.loc[[date-dt.timedelta(days=ndays) for ndays in [7,14,21,28]]]].as_matrix()
-        for key in [7,14,21,28]:
-            self.data[date, 'before'+str(key)] = temp
     
     
 
@@ -105,17 +100,12 @@ class submission_preprocessing():
         self.date_vector()
         self.jour_nuit_creation()
         self.week_day_to_vector()
-        for date in [dt.datetime(2012,4,1),dt.datetime(2012,4,2)]:
-            self.lastvalue(date)
-            return (self.data[date])
-        self.valeur_max()
+#        self.valeur_max()
 
         
         if not keep_all:
             print(used_columns)
             self.data = self.data[used_columns]
-        else:
-            self.data = self.data.drop(remove_columns, axis=1)
 
 
 if __name__ == "__main__": #execute the code only if the file is executed directly and not imported

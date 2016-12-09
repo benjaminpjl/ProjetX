@@ -10,7 +10,9 @@ class _Config:
         
     
         self.default_columns = list(self.before.values())+['2012','2011','JOUR','MAX','CSPL_RECEIVED_CALLS']
-        self.sub_columns = list(self.before.values())+['2012','2011','JOUR','MAX','prediction']
+        
+        self.sub_columns = ['2012','2011','JOUR','prediction']        
+#        self.sub_columns = list(self.before.values())+['2012','2011','JOUR','MAX','prediction']
         self.test_columns = list(self.before.values())+['2012','2011','JOUR','MAX','CSPL_RECEIVED_CALLS']
 CONFIG = _Config()
 
