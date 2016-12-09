@@ -3,8 +3,9 @@ from configuration import CONFIG
 import numpy as np
 import datetime as dt
 import logging
+import time
 logging.basicConfig(filename='log_27112016_2.txt', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-
+dateparse = lambda x: time.strptime(x, '%Y-%m-%d %H:%M:%S.000')
 
 def find_day(day):             #Transforme les jours de la semaine en int compris entre 0 et 1
     if (day == "Dimanche"):
@@ -22,36 +23,8 @@ def find_day(day):             #Transforme les jours de la semaine en int compri
     if (day == "Samedi"):
         return 6
 
-def hourlymean_past(date, y):
-    
-    nday_before = 7
-    ysel = y.loc[(y.index > date - dt.timedelta(nday_before))]
-    ysel = ysel.loc[(ysel.index < date)]
-    logging.debug(date,ysel['TIME','CSPL_RECEIVED_CALLS'].head(n=5))
-    h = extract_hour(date)
-    if (len(ysel.loc[ysel.loc[:,'TIME'] == h]) < 0):
-        return(0)
-    else:
-        return(ysel.loc[ysel.loc[:,'TIME'] == h].loc[:,"CSPL_RECEIVED_CALLS"].mean())
 
-def extract_date(string):
-    d = dt.datetime.strptime(string, "%Y-%m-%d %H:%M:%S.000")
-    return(d)
-
-def extract_weekday(date):
-    return(date.weekday())
-
-def extract_hour(date):
-    return(date.hour)
-
-def extract_month(date):
-    return(date.month)
-
-def extract_year(date):
-    return(date.year)
-
-def extract_min(date):
-    return(date.hour*60+date.minute)
+dateparse = lambda x: time.strptime(x, '%Y-%m-%d %H:%M:%S.000')
     
 class submission_preprocessing():
     
@@ -71,21 +44,22 @@ class submission_preprocessing():
         self.data.reset_index(inplace = True)
     
     def preprocess_date(self):
-        self.data['DATE'] = self.data["DATE"].apply(extract_date)
+        self.data['DATE'] = self.data["DATE"].apply(dateparse)
     
     def date_vector(self):
-        self.data['YEAR'] = self.data['DATE'].apply(extract_year)
+        self.data['YEAR'] = self.data['DATE'].apply(lambda x: x.tm_year)
         for year in ['2011','2012','2013']:
             self.data[year] = self.data['YEAR'].apply(lambda x: (int(year) == x)*1)
         
-        self.data['MONTH'] = self.data['DATE'].apply(extract_month)
+        self.data['MONTH'] = self.data['DATE'].apply(lambda x: x.tm_mon)
         for key, month in CONFIG.months.items():
             self.data[month] = self.data['MONTH'].apply(lambda x: int(x == key))
         
-        self.data['TIME']= self.data['DATE'].apply(extract_min)
+        self.data['TIME']= self.data['DATE'].apply(lambda x: x.tm_hour*60 + x.tm_min)
         self.data['SLOT'] = self.data['TIME'].apply(lambda x: (x in range(450,1411))*(x-450)/30 + (x in range(0,451))*(x/30+1) + (x in range(1411,1441))*0)
 #        self.data['YEAR_DAY']= self.data['DATE'].apply(extract_weekday)
-        self.data['WEEK_DAY'] = self.data['DATE'].apply(extract_weekday)
+        self.data['WEEK_DAY'] = self.data['DATE'].apply(lambda x: x.tm_wday)
+        self.data.set_index('DATE',inplace = True,verify_integrity = True)
     
     
     def lastvalue(self,date):
@@ -94,17 +68,6 @@ class submission_preprocessing():
             self.data[date, 'before'+str(key)] = temp
     
     
-    
-    def hourlymean_past(self, weeks):
-        
-        self.data['MEAN'+str(weeks)]=[0]*self.data.shape[0]
-        
-        for k in range(1,weeks+1):
-            self.lastvalue(k*7)
-            self.data['MEAN'+str(weeks)]=self.data['MEAN'+str(weeks)]+ self.data['before' + str(k*7)]
-        
-        
-        self.data['MEAN'+str(weeks)] = self.data['MEAN'+str(weeks)]/weeks
 
     def valeur_max(self):
         self.data['MAX'] = np.maximum.reduce([self.data['before7'], self.data['before14'], self.data['before21'], self.data['before28'], self.data['before35']])
@@ -135,15 +98,11 @@ class submission_preprocessing():
         self.data.drop('WEEK_DAY', axis = 1, inplace = True)
                 
                 
-    def full_preprocess(self, assid, keep_all_ass_id = False, used_columns=CONFIG.sub_columns, keep_all = False, remove_columns = []):
+    def full_preprocess(self, assid, used_columns=CONFIG.sub_columns, keep_all = False):
         self.ass_id_creation()
-        if keep_all_ass_id!=True:
-            self.select_assid(assid)
+        self.select_assid(assid)
         self.preprocess_date()
         self.date_vector()
-        self.data.set_index('DATE',inplace = True,verify_integrity = True)
-        #        print("Past mean processing...")
-        #        self.data['MEAN_PAST'] = self.data.index.map(lambda x : hourlymean_past(x,self.data))
         self.jour_nuit_creation()
         self.week_day_to_vector()
         for date in [dt.datetime(2012,4,1),dt.datetime(2012,4,2)]:
