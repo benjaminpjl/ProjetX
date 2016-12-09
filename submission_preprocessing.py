@@ -37,16 +37,16 @@ class submission_preprocessing():
     def ass_id_creation(self): # Create ASS_ID (int between 0 and 28) from ASS_ASSIGNMENT as defined in configuration.py
         self.data['ASS_ID'] = self.data['ASS_ASSIGNMENT'].apply(lambda x: int(CONFIG.ass_assign[x]))
     
-    def select_assid(self, assid):
+    def select_assid(self, assid): #Select the rows corresponding to the given ASS_ID
         self.data=self.data.loc[self.data['ASS_ID'] == assid]
         self.data.drop('ASS_ID',axis = 1, inplace = True)
         self.data=self.data.groupby(['DATE']).sum()
         self.data.reset_index(inplace = True)
     
-    def preprocess_date(self):
+    def preprocess_date(self):  #Convert dates from string to datetime format
         self.data['DATE'] = self.data["DATE"].apply(dateparse)
     
-    def date_vector(self):
+    def date_vector(self):  #Create first kind of features we used
         self.data['YEAR'] = self.data['DATE'].apply(lambda x: x.tm_year)
         for year in ['2011','2012','2013']:
             self.data[year] = self.data['YEAR'].apply(lambda x: (int(year) == x)*1)
