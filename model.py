@@ -23,7 +23,7 @@ submission['ASS_ID'] = submission['ASS_ASSIGNMENT'].apply(lambda x: int(CONFIG.a
 print('Ready for training...')
 
 #Training model on 27 assignments
-for id in range(28):
+for id in tqdm([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,18,19,20,21,22,23,24,25,26]):
     
     print("Working on assignment : ",id)
     preprocessing_id = fp.feature_preprocessing()
@@ -97,9 +97,7 @@ for id in range(28):
                 submission_id.data.loc[date,'before168'] = submission_id.data.loc[date,'before140']    
     
     #Creation of X_test['MAX']: maximum value for CSPL_RECEIVED_CALLS on the previous weeks.
-    for week in submission_id.data['WEEK'].unique():    
-        X_test = submission_id.data.loc[data['WEEK'] == week].drop(['prediction','DATE','', axis = 1)
-        X_test['MAX'] = np.maximum.reduce([X_test['before7'], X_test['before14'], X_test['before21'], X_test['before28'], X_test['before56'], X_test['before112'], X_test['before140'], X_test['before168'] ] )
+      X_test['MAX'] = np.maximum.reduce([X_test['before7'], X_test['before14'], X_test['before21'], X_test['before28'], X_test['before56'], X_test['before112'], X_test['before140'], X_test['before168'] ] )
     
       
         if (X_test.shape[0] > 0):
