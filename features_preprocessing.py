@@ -35,16 +35,16 @@ class feature_preprocessing():
     def ass_id_creation(self): # Create ASS_ID (int between 0 and 28) from ASS_ASSIGNMENT as defined in configuration.py
         self.data['ASS_ID'] = self.data['ASS_ASSIGNMENT'].apply(lambda x: int(CONFIG.ass_assign[x]))
     
-    def select_assid(self, assid):
+    def select_assid(self, assid):  #Select all the rows corresponding to a given ASS_ID 
         self.data=self.data.loc[self.data['ASS_ID'] == assid]
         self.data.drop('ASS_ID',axis = 1, inplace = True)
         self.data=self.data.groupby(['DATE','TPER_TEAM','DAY_WE_DS','WEEK_END']).sum()
         self.data.reset_index(inplace = True)
     
-    def preprocess_date(self):
+    def preprocess_date(self):   #Convert date from a string to a datetime format
         self.data["DATE"] = self.data["DATE"].apply(dateparse)
     
-    def date_vector(self):
+    def date_vector(self):  #Create features 'YEAR', 'MONTH', 'DAY', 'TIME' (first approach of feature engineering)
         self.data['YEAR'] = self.data['DATE'].apply(lambda x: x.tm_year)
         for year in ['2011','2012','2013']:
             self.data[year] = self.data['YEAR'].apply(lambda x: (int(year) == x)*1)
@@ -54,6 +54,7 @@ class feature_preprocessing():
             self.data[month] = self.data['MONTH'].apply(lambda x: int(x == key))
         
         self.data['TIME']= self.data['DATE'].apply(lambda x: x.tm_hour*60 + x.tm_min)
+        #Creating time slots
         self.data['SLOT'] = self.data['TIME'].apply(lambda x: (x in range(450,1411))*(x-450)/30 + (x in range(0,451))*(x/30+1) + (x in range(1411,1441))*0)
         #self.data['TIME'] = self.data['TIME'].apply(lambda x: x in range(450,1411)*(x[0]-450)/30 + x in range(0,451)*(x/30+1) + x in range(1411,1441)*0)
         self.data['YEAR_DAY']= self.data["DATE"].apply(lambda x : x.tm_yday)
@@ -65,6 +66,7 @@ class feature_preprocessing():
         variation = self.data['CSPL_RECEIVED_CALLS'].max()- self.data['CSPL_RECEIVED_CALLS'].min()
         self.data['CSPL_RECEIVED_CALLS']= (self.data['CSPL_RECEIVED_CALLS']-mean)/variation
     
+    #Creating features 'before...'
     def lastvalue(self, nday):
         copy= pd.DataFrame()
         copy['before']= self.data.ix[self.data.index-dt.timedelta(days = nday)] ['CSPL_RECEIVED_CALLS']
@@ -72,20 +74,8 @@ class feature_preprocessing():
         self.data['before'+ str(nday)]=copy['before']
         self.data['before'+ str(nday)].fillna(self.data['CSPL_RECEIVED_CALLS'], inplace=True)
     
-
-    def hourlymean_past(self, weeks):
-        
-        self.data['MEAN'+str(weeks)]=[0]*self.data.shape[0]
-        
-        for k in range(1,weeks+1):
-            self.lastvalue(k*7)
-            self.data['MEAN'+str(weeks)]=self.data['MEAN'+str(weeks)]+ self.data['before' + str(k*7)]
-    
-
-        self.data['MEAN'+str(weeks)] = self.data['MEAN'+str(weeks)]/weeks
-            
+    #Creating feature 'MAX': maximum number of calls for the same day of the week and same hour over the past weeks        
     def valeur_max(self):
-        
         self.data['MAX'] = np.maximum.reduce([self.data['before7'], self.data['before14'], self.data['before21'], self.data['before28'], self.data['before35']])
     
     def jour_nuit_creation(self):  #Création de la feature jour nuit
@@ -118,20 +108,9 @@ class feature_preprocessing():
         self.select_assid(assid)
         self.preprocess_date()
         self.date_vector()
-        self.lastvalue(7)
-        self.lastvalue(14)
-        self.lastvalue(21)
-        self.lastvalue(28)
-        self.lastvalue(35)
-        self.lastvalue(56)
-        self.lastvalue(84)
-        self.lastvalue(112)
-        self.lastvalue(119)
-        self.lastvalue(140)
-        self.lastvalue(168)
-        self.valeur_max()
-     
-
+        for day in [7,14,21,28,35,56,84,112,119,140,168]:
+            self.lastvalue(day) #Creating of features 'before...'
+        self.valeur_max() #Creating of feature 'MAX'
         self.jour_nuit_creation()
         self.week_day_to_vector()
         #self.normalize_Calls()
